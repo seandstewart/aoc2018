@@ -19,12 +19,12 @@ def locate_matches(path: pathlib.Path = INPUT, max_dist: Distance = 1) -> Repeat
     values: Values = load_values_list(path, as_int=False)
     candidates = set(values)
     repeaters: Repeaters = {}
+    tree = BKTree(levenshtein_distance, *candidates)
     while candidates:
         candidate = candidates.pop()
-        tree = BKTree(levenshtein_distance, *candidates)
-        matches = tree.match(candidate, max_dist)
+        matches = set(y for x, y in tree.match(candidate, max_dist) if y != candidate)
         if matches:
-            repeaters[candidate] = set([y for x, y in matches])
+            repeaters[candidate] = matches
             candidates -= set(matches)
 
     return repeaters
