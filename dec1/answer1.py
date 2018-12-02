@@ -5,7 +5,7 @@ import pathlib
 from typing import NewType
 
 from dec1 import INPUT
-from util import load_values_list
+from util.helpers import load_values_list
 
 logger = logging.getLogger(__name__)
 

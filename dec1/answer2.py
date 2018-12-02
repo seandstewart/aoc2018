@@ -6,7 +6,7 @@ from itertools import accumulate, cycle
 from typing import NewType, Set, Iterator
 
 from dec1 import INPUT
-from util import Values, load_values_list
+from util.helpers import Values, load_values_list
 
 logger = logging.getLogger(__name__)
 
