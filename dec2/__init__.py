@@ -5,5 +5,5 @@ import os
 from util import BASEDIR
 
 INPUT = BASEDIR / os.path.dirname(__file__) / 'input.txt'
-TEST1 = BASEDIR / os.path.dirname(__file__) / 'test1.txt'
-TEST2 = BASEDIR / os.path.dirname(__file__) / 'test2.txt'
+EXAMPLE1 = BASEDIR / os.path.dirname(__file__) / 'example1.txt'
+EXAMPLE2 = BASEDIR / os.path.dirname(__file__) / 'example2.txt'
