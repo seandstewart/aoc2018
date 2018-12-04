@@ -9,7 +9,7 @@ import logging
 import pathlib
 import re
 from operator import attrgetter
-from typing import List, NewType, Sequence, Set, Tuple, Pattern, NamedTuple, Hashable, Union
+from typing import List, NewType, Pattern, NamedTuple, Hashable, Union
 
 from dec4 import INPUT
 from util import Values
@@ -17,15 +17,24 @@ from util.helpers import load_values_list
 
 logger = logging.getLogger(__name__)
 
+DATE_PATTERN: str = '%Y-%m-%d %H:%M'
+LOG_PATTERN: Pattern = re.compile(r'\[(?P<datestring>.+)\]\s(?P<entry>.+)')
+GUARD_PATTERN: Pattern = re.compile(r'Guard\s#(?P<id>\d+)')
+SLEEPS_PATTERN: Pattern = re.compile(r'falls\sasleep')
+WAKES_PATTERN: Pattern = re.compile(r'wakes\sup')
+LOG_SORT_KEY = attrgetter('date')
+
 
 class Action(enum.Enum):
     SLEEP = 'sleep'
-    SHIFT = 'shift'
 
 
 class RawLogEntry(NamedTuple):
     date: datetime.datetime
     entry: str
+
+
+RawLog = NewType('RawLog', List[RawLogEntry])
 
 
 @functools.total_ordering
@@ -54,16 +63,6 @@ class TimeRange:
 class LogAction(NamedTuple):
     time: TimeRange
     action: Action
-
-
-RawLog = NewType('RawLog', List[RawLogEntry])
-
-DATE_PATTERN: str = '%Y-%m-%d %H:%M'
-LOG_PATTERN: Pattern = re.compile(r'\[(?P<datestring>.+)\]\s(?P<entry>.+)')
-GUARD_PATTERN: Pattern = re.compile(r'Guard\s#(?P<id>\d+)')
-SLEEPS_PATTERN: Pattern = re.compile(r'falls\sasleep')
-WAKES_PATTERN: Pattern = re.compile(r'wakes\sup')
-LOG_SORT_KEY = attrgetter('date')
 
 
 @functools.total_ordering
@@ -154,7 +153,7 @@ def parse_raw_log(log: RawLog) -> GuardShiftLog:
     return parsed
 
 
-class MaxSleepShift(NamedTuple):
+class GuardSleepTally(NamedTuple):
     guard_id: Hashable
     shifts: GuardShiftLog
     total_sleep: int
@@ -171,7 +170,7 @@ def get_shift_sleep_freq(shifts: GuardShiftLog) -> collections.Counter:
     return counter
 
 
-def get_max_shift(log: GuardShiftLog, sort: str = 'total_sleep') -> MaxSleepShift:
+def get_target_shift(log: GuardShiftLog, sort: str = 'total_sleep') -> GuardSleepTally:
     guards = set(x.id for x in log)
     guard_sleep_maxes = []
     for guard in guards:
@@ -183,7 +182,7 @@ def get_max_shift(log: GuardShiftLog, sort: str = 'total_sleep') -> MaxSleepShif
             common_minute, num_hits = most_common[0]
         total_sleep = sum(x.total_minutes_slept for x in shifts)
         guard_sleep_maxes.append(
-            MaxSleepShift(
+            GuardSleepTally(
                 guard_id=guard,
                 shifts=shifts,
                 total_sleep=total_sleep,
