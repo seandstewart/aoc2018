@@ -90,9 +90,7 @@ def levenshtein_distance(x: Sequence, y: Sequence) -> int:
 
     else:
         raise TypeError(
-            "Must provide iterables. Provided: {} (x), {} (y)".format(
-                type(x), type(y)
-            )
+            f"Must provide iterables. Provided: {type(x)} (x), {type(y)} (y)"
         )
 
     return dist
