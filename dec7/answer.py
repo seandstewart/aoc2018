@@ -105,7 +105,7 @@ class Queue:
             if step.predicates and step not in self.final:
                 step.predicates = [x for x in step.predicates if x not in self.final]
 
-    def get_rough_sorted_steps(self) -> List[Step]:
+    def get_next_available(self) -> List[Step]:
         self.free_up_steps()
         free = self.get_free_steps()
         ready = self.get_ready_steps()
@@ -121,7 +121,7 @@ class Queue:
         return sorted(new)
 
     def run(self) -> List[Step]:
-        steps = self.get_rough_sorted_steps()
+        steps = self.get_next_available()
         while steps:
             if len(self.workers) > 1:
                 free = self.get_free_workers()
@@ -139,6 +139,6 @@ class Queue:
             else:
                 self.final.append(steps[0])
             self.total_seconds += 1
-            steps = self.get_rough_sorted_steps()
+            steps = self.get_next_available()
 
         return self.final
