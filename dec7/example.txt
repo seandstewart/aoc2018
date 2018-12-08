@@ -1,0 +1,7 @@
+Step C must be finished before step A can begin.  # 0, 1
+Step C must be finished before step F can begin.  # 0, 1
+Step A must be finished before step B can begin.  # 1, 2
+Step A must be finished before step D can begin.  # 1, 2
+Step B must be finished before step E can begin.  # 2, 3
+Step D must be finished before step E can begin.  # 2, 3
+Step F must be finished before step E can begin.  # 1, 3

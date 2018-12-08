@@ -105,3 +105,7 @@ def flatten_iter(iterable: Iterable[Iterable]):
     for entry in iterable:
         result += entry
     return result
+
+
+def manhattan_distance(a: Sequence, b: Sequence) -> int:
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
