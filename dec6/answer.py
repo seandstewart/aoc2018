@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-import collections
 import dataclasses
 import functools
 import logging
 import pathlib
 import string
 from operator import itemgetter
-from typing import List, NewType, Pattern, NamedTuple, Hashable, Union, Callable, Iterator, Dict, Tuple, Set
+from typing import List, NamedTuple, Union, Iterator, Dict, Set
 
 from dec6 import INPUT
-from util import Value
 from util.box import BoxArea, Point, Coordinate, Coordinates
 from util.helpers import load_values_list, manhattan_distance
 
