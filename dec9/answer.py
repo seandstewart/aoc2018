@@ -4,27 +4,9 @@ import collections
 import dataclasses
 import logging
 import operator
-import pathlib
-import uuid
-from typing import NamedTuple, Hashable, List, Any, NewType, Union, Tuple
-
-from dec9 import INPUT
-from util.helpers import load_values_list, flatten_iter
+from typing import Union, Tuple
 
 logger = logging.getLogger(__name__)
-
-
-class board(collections.deque):
-
-    def delete(self, n: int) -> Any:
-        self.rotate(-n)
-        value = self.popleft()
-        self.rotate(n)
-        return value
-
-    def drop(self, n: int) -> Any:
-        self.rotate(-n)
-        return self.popleft()
 
 
 @dataclasses.dataclass
