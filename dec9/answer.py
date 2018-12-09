@@ -4,7 +4,11 @@ import collections
 import dataclasses
 import logging
 import operator
+import pathlib
+import re
 from typing import Union, Tuple
+
+from dec9 import INPUT
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +25,7 @@ class MarbleGame:
         self.scores = collections.defaultdict(int)
 
     def is_special(self, marble: int) -> bool:
-        return marble % self.special == 0
+        return marble and marble % self.special == 0
 
     @property
     def winner(self) -> Union[Tuple[int, int], None]:
@@ -35,10 +39,29 @@ class MarbleGame:
                 if not self.bag:
                     continue
                 marble = self.bag.popleft()
+                self.circle.rotate(2)
                 if not self.is_special(marble):
-                    self.circle.rotate(2)
                     self.circle.append(marble)
                 else:
-                    self.circle.rotate(-7)
+                    self.circle.rotate(-9)
                     self.scores[player] += self.circle.pop() + marble
-                    self.circle.rotate(-1)
+
+
+PATTERN = re.compile(
+    r'(?P<players>\d+) players; last marble is worth (?P<marbles>\d+) points'
+    r'(: high score is (?P<score>\d+))?'
+)
+
+
+def get_answer1(path: pathlib.Path = INPUT):
+    match = PATTERN.match(path.read_text())
+    game = MarbleGame(int(match.group('players')), int(match.group('marbles')))
+    game.play()
+    return game.winner
+
+
+def get_answer2(path: pathlib.Path = INPUT):
+    match = PATTERN.match(path.read_text())
+    game = MarbleGame(int(match.group('players')), int(match.group('marbles')) * 100)
+    game.play()
+    return game.winner
