@@ -38,7 +38,6 @@ class Node(NamedTuple):
 
 
 class LicenseTree:
-
     def __init__(self, path: pathlib.Path = INPUT):
         self.nodes = {}
         self.root = None
