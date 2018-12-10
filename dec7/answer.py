@@ -53,7 +53,7 @@ class Step:
         return f"{type(self)}(name={self.name}, predicates={self.predicates}, duration={self.duration})"
 
     def __str__(self):
-        return repr(self)
+        return self.name
 
     def __lt__(self, other: Union[str, 'Step']):
         return str(self) < str(other)
