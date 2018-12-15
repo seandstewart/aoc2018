@@ -50,10 +50,7 @@ class FuelGrid:
             PowerGrid(self.get_power(x, y, size), FuelCell(x, y), size)
             for x, y in product(self.range(size), self.range(size))
         )
-        try:
-            return max(powers, key=powergetter)
-        except ValueError:
-            print(size)
+        return max(powers, key=powergetter)
 
     def best_overall(self):
         powers = (self.best_for_size(s) for s in self.range())
