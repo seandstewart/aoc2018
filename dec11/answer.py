@@ -45,23 +45,23 @@ class FuelGrid:
         x0, y0, x1, y1 = x - 1, y - 1, x + size - 1, y + size - 1
         return table[(x0, y0)] + table[(x1, y1)] - table[(x1, y0)] - table[(x0, y1)]
 
-    def best_for_size(self, size: int):
+    def best_for_size(self, size: int) -> PowerGrid:
         powers = (
             PowerGrid(self.get_power(x, y, size), FuelCell(x, y), size)
             for x, y in product(self.range(size), self.range(size))
         )
         return max(powers, key=powergetter)
 
-    def best_overall(self):
+    def best_overall(self) -> PowerGrid:
         powers = (self.best_for_size(s) for s in self.range())
         return max(powers, key=powergetter)
 
 
-def get_answer1(serial: int, size: int = 3) -> Tuple[int, int, int]:
+def get_answer1(serial: int, size: int = 3) -> PowerGrid:
     grid = FuelGrid(serial)
     return grid.best_for_size(size)
 
 
-def get_answer2(serial: int) -> Tuple[int, int, int, int]:
+def get_answer2(serial: int) -> PowerGrid:
     grid = FuelGrid(serial)
     return grid.best_overall()
