@@ -5,7 +5,7 @@ from itertools import product
 from typing import Tuple
 
 
-def power_mapping(serial: int) -> defaultdict:
+def summed_area_table(serial: int) -> defaultdict:
     table = defaultdict(int)
     for x, y in product(range(1, 301), range(1, 301)):
         rack_id = x + 10
@@ -14,7 +14,7 @@ def power_mapping(serial: int) -> defaultdict:
     return table
 
 
-def get_region_power(table: defaultdict, size: int, x: int, y: int) -> int:
+def region_sum(table: defaultdict, size: int, x: int, y: int) -> int:
     x0, y0, x1, y1 = x - 1, y - 1, x + size - 1, y + size - 1
     return table[(x0, y0)] + table[(x1, y1)] - table[(x1, y0)] - table[(x0, y1)]
 
@@ -22,18 +22,18 @@ def get_region_power(table: defaultdict, size: int, x: int, y: int) -> int:
 def best(table: defaultdict, size: int) -> Tuple[int, int, int]:
     powers = []
     for x, y in product(range(1, 301 - size + 1), range(1, 301 - size + 1)):
-        power = get_region_power(table, size, x, y)
+        power = region_sum(table, size, x, y)
         powers.append((power, x, y))
 
     return max(powers)
 
 
 def get_answer1(serial: int, size: int = 3) -> Tuple[int, int, int]:
-    table = power_mapping(serial)
+    table = summed_area_table(serial)
     return best(table, size)
 
 
 def get_answer2(serial: int) -> Tuple[int, int, int, int]:
-    table = power_mapping(serial)
+    table = summed_area_table(serial)
     powers = (best(table, s) + (s,) for s in range(1, 301))
     return max(powers)
