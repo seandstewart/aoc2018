@@ -133,9 +133,6 @@ class SortedSet(UserList):
     def __contains__(self, item: object) -> bool:
         return self._set.__contains__(item)
 
-    def __getattr__(self, item: str):
-        return getattr(self._set, item)
-
     def __add__(self, other: Iterable) -> 'SortedSet':
         return SortedSet(super().__add__([x for x in other if x not in self]))
 
@@ -183,6 +180,21 @@ class SortedSet(UserList):
                 self.remove(x)
         self.extend(SortedSet(x for x in other if x in new))
 
+    def __gt__(self, other: Iterable) -> bool:
+        return self._set > set(other)
+
+    def __ge__(self, other: Iterable) -> bool:
+        return self._set >= set(other)
+
+    def __lt__(self, other: Iterable) -> bool:
+        return self._set < set(other)
+
+    def __le__(self, other: Iterable) -> bool:
+        return self._set <= set(other)
+
+    def __eq__(self, other: Iterable) -> bool:
+        return self._set == set(other)
+
     def extend(self, other: Iterable[Hashable]):
         other = [x for x in other if x not in self]
         super().extend(other)
@@ -190,3 +202,49 @@ class SortedSet(UserList):
     def append(self, item: Hashable):
         if item not in self:
             self.append(item)
+
+    def add(self, item: Hashable):
+        self.append(item)
+
+    def difference(self, *others: Iterable) -> 'SortedSet':
+        new = SortedSet(self)
+        for other in others:
+            new -= other
+        return new
+
+    def difference_update(self, *others: Iterable) -> None:
+        for other in others:
+            self -= other
+
+    def intersection(self, *others: Iterable) -> 'SortedSet':
+        new = SortedSet(self)
+        for other in others:
+            new &= other
+
+        return new
+
+    def intersection_update(self, *others: Iterable) -> 'SortedSet':
+        for other in others:
+            self &= other
+
+    def symmetric_difference(self, other: Iterable) -> 'SortedSet':
+        return self ^ other
+
+    def symmetric_difference_update(self, other: Iterable) -> None:
+        self ^= other
+
+    def union(self, *others: Iterable) -> 'SortedSet':
+        new = SortedSet(self)
+        for other in others:
+            new | other
+        return new
+
+    def update(self, *others: Iterable) -> None:
+        for other in others:
+            self.extend(other)
+
+    def discard(self, item: Hashable):
+        try:
+            self.remove(item)
+        except ValueError:
+            pass
