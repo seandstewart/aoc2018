@@ -134,7 +134,9 @@ class OrderedSet(UserList):
         return self._set.__contains__(item)
 
     def __add__(self, other: Iterable) -> 'OrderedSet':
-        return OrderedSet(super().__add__([x for x in other if x not in self]))
+        new = self[:]
+        new.extend(other)
+        return new
 
     def __iadd__(self, other: Iterable) -> None:
         self.extend(other)
