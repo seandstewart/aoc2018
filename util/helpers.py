@@ -2,17 +2,17 @@
 # -*- coding: UTF-8 -*-
 import logging
 import pathlib
-from typing import NewType, List, Union, Dict, Hashable, Tuple, Sequence, Iterable, Set, Any
+from typing import NewType, List, Union, Dict, Hashable, Tuple, Sequence, Iterable, Set, Any, Generator, Iterator
 
 logger = logging.getLogger(__name__)
 Values = NewType('Values', List[Union[int, str]])
 
 
-def load_values_list(path: pathlib.Path, as_int: bool = True) -> Values:
+def load_values_list(path: pathlib.Path, as_int: bool = False) -> Values:
     values: Values = []
     if path.exists():
         with open(path) as file:
-            values: Values = [x.strip() for x in file.readlines()]
+            values: Values = [x.strip('\n') for x in file.readlines() if x.strip()]
             if as_int:
                 values: Values = [int(x) for x in values]
     else:
@@ -101,7 +101,10 @@ def diffs(x: Sequence, y: Sequence, right: bool = True) -> Set[Any]:
 
 
 def flatten_iter(iterable: Iterable[Iterable]):
-    result = type(iterable)()
+    try:
+        result = type(iterable)()
+    except TypeError:
+        result = []
     for entry in iterable:
         result += entry
     return result
@@ -109,3 +112,8 @@ def flatten_iter(iterable: Iterable[Iterable]):
 
 def manhattan_distance(a: Sequence, b: Sequence) -> int:
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+
+def chunks(l: Sequence, n: int) -> Iterator[Sequence]:
+    """Yield successive n-sized chunks from l."""
+    return (l[i:i + n] for i in range(0, len(l), n))
