@@ -121,7 +121,7 @@ def chunks(l: Sequence, n: int) -> Iterator[Sequence]:
     return (l[i:i + n] for i in range(0, len(l), n))
 
 
-class SortedSet(UserList):
+class OrderedSet(UserList):
 
     def __init__(self, initlist: Optional[Iterable[Hashable]] = ...) -> None:
         super().__init__(initlist)
@@ -133,15 +133,15 @@ class SortedSet(UserList):
     def __contains__(self, item: object) -> bool:
         return self._set.__contains__(item)
 
-    def __add__(self, other: Iterable) -> 'SortedSet':
-        return SortedSet(super().__add__([x for x in other if x not in self]))
+    def __add__(self, other: Iterable) -> 'OrderedSet':
+        return OrderedSet(super().__add__([x for x in other if x not in self]))
 
     def __iadd__(self, other: Iterable) -> None:
         self.extend(other)
 
-    def __and__(self, other: Iterable) -> 'SortedSet':
+    def __and__(self, other: Iterable) -> 'OrderedSet':
         new = self._set & set(other)
-        return SortedSet(x for x in self if x in new)
+        return OrderedSet(x for x in self if x in new)
 
     def __iand__(self, other: Iterable) -> None:
         diff = self._set - set(other)
@@ -151,9 +151,9 @@ class SortedSet(UserList):
             except ValueError:
                 pass
 
-    def __sub__(self, other: Iterable) -> 'SortedSet':
+    def __sub__(self, other: Iterable) -> 'OrderedSet':
         new = self._set - set(other)
-        return SortedSet(x for x in self if x in new)
+        return OrderedSet(x for x in self if x in new)
 
     def __isub__(self, other: Iterable) -> None:
         new = self._set - set(other)
@@ -162,15 +162,15 @@ class SortedSet(UserList):
             if x not in new:
                 self.remove(x)
 
-    def __or__(self, other: Iterable) -> 'SortedSet':
-        return self + SortedSet(other)
+    def __or__(self, other: Iterable) -> 'OrderedSet':
+        return self + OrderedSet(other)
 
     def __ior__(self, other: Iterable) -> None:
         self.extend(other)
 
-    def __xor__(self, other: Iterable) -> 'SortedSet':
+    def __xor__(self, other: Iterable) -> 'OrderedSet':
         new = self._set ^ set(other)
-        return SortedSet(x for x in self if x in new) + SortedSet(x for x in other if x in new)
+        return OrderedSet(x for x in self if x in new) + OrderedSet(x for x in other if x in new)
 
     def __ixor__(self, other: Iterable) -> None:
         new = self._set ^ set(other)
@@ -178,7 +178,7 @@ class SortedSet(UserList):
         for x in lyst:
             if x not in new:
                 self.remove(x)
-        self.extend(SortedSet(x for x in other if x in new))
+        self.extend(OrderedSet(x for x in other if x in new))
 
     def __gt__(self, other: Iterable) -> bool:
         return self._set > set(other)
@@ -206,8 +206,8 @@ class SortedSet(UserList):
     def add(self, item: Hashable):
         self.append(item)
 
-    def difference(self, *others: Iterable) -> 'SortedSet':
-        new = SortedSet(self)
+    def difference(self, *others: Iterable) -> 'OrderedSet':
+        new = OrderedSet(self)
         for other in others:
             new -= other
         return new
@@ -216,25 +216,25 @@ class SortedSet(UserList):
         for other in others:
             self -= other
 
-    def intersection(self, *others: Iterable) -> 'SortedSet':
-        new = SortedSet(self)
+    def intersection(self, *others: Iterable) -> 'OrderedSet':
+        new = OrderedSet(self)
         for other in others:
             new &= other
 
         return new
 
-    def intersection_update(self, *others: Iterable) -> 'SortedSet':
+    def intersection_update(self, *others: Iterable) -> 'OrderedSet':
         for other in others:
             self &= other
 
-    def symmetric_difference(self, other: Iterable) -> 'SortedSet':
+    def symmetric_difference(self, other: Iterable) -> 'OrderedSet':
         return self ^ other
 
     def symmetric_difference_update(self, other: Iterable) -> None:
         self ^= other
 
-    def union(self, *others: Iterable) -> 'SortedSet':
-        new = SortedSet(self)
+    def union(self, *others: Iterable) -> 'OrderedSet':
+        new = OrderedSet(self)
         for other in others:
             new | other
         return new
