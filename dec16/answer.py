@@ -1,11 +1,10 @@
 import dataclasses
-import ast
 import pathlib
 import re
 
-from typing import NamedTuple, Tuple, NewType, List, Dict
+from typing import NamedTuple, Tuple, NewType, List
 
-from dec16 import INPUT, INPUT2, EXAMPLE
+from dec16 import INPUT, INPUT2
 from util.helpers import load_values_list, Values, chunks, flatten_iter
 
 Registers = NewType('Registers', List[int])
@@ -107,7 +106,6 @@ class InstructionSet:
 @dataclasses.dataclass
 class MachineController:
     examples: List[InstructionSet]
-    instructions: List[Instruction]
     memory: VirtualMemory
 
     def __post_init__(self):
@@ -125,22 +123,22 @@ class MachineController:
 
         return found
 
-    def run(self):
-        for instruction in self.instructions:
+    def run(self, instructions: List[Instruction]):
+        for instruction in instructions:
             operation = self.opcodes[instruction.opcode]
             getattr(self.memory, operation)(instruction.a, instruction.b, instruction.c)
 
 
-def load_operations(path: pathlib.Path = INPUT) -> List[InstructionSet]:
+def load_examples(path: pathlib.Path = INPUT) -> List[InstructionSet]:
     values: Values = load_values_list(path)
-    operations = []
+    examples = []
     for before, instruction, after in chunks(values, 3):  # Instruction sets are groups of three lines
         before: State = tuple(int(x) for x in PATTERN.findall(before))
         after: State = tuple(int(x) for x in PATTERN.findall(after))
         instruction = Instruction(*(int(x) for x in PATTERN.findall(instruction)))
-        operations.append(InstructionSet(before, instruction, after))
+        examples.append(InstructionSet(before, instruction, after))
 
-    return operations
+    return examples
 
 
 def load_instructions(path: pathlib.Path = INPUT2) -> List[Instruction]:
@@ -154,16 +152,16 @@ def load_instructions(path: pathlib.Path = INPUT2) -> List[Instruction]:
 
 
 def get_answer1(path: pathlib.Path = INPUT):
-    operations = load_operations(path)
+    examples = load_examples(path)
 
-    return len([x for x in operations if len(x.candidates) > 2])
+    return len([x for x in examples if len(x.candidates) > 2])
 
 
 def get_answer2(input: pathlib.Path = INPUT, input2: pathlib.Path = INPUT2) -> MachineController:
-    operations = load_operations(input)
-    instructions = load_instructions(input2)
     registers: Registers = [0 for _ in range(4)]
     mem = VirtualMemory(registers)
-    controller = MachineController(operations, instructions, mem)
-    controller.run()
+    examples = load_examples(input)
+    instructions = load_instructions(input2)
+    controller = MachineController(examples, mem)
+    controller.run(instructions)
     return controller
