@@ -104,7 +104,7 @@ class InstructionSet:
 
 
 @dataclasses.dataclass
-class MachineController:
+class VirtualMemoryController:
     examples: List[InstructionSet]
     memory: VirtualMemory
 
@@ -157,11 +157,11 @@ def get_answer1(path: pathlib.Path = INPUT):
     return len([x for x in examples if len(x.candidates) > 2])
 
 
-def get_answer2(input: pathlib.Path = INPUT, input2: pathlib.Path = INPUT2) -> MachineController:
+def get_answer2(input: pathlib.Path = INPUT, input2: pathlib.Path = INPUT2) -> VirtualMemoryController:
     registers: Registers = [0 for _ in range(4)]
     mem = VirtualMemory(registers)
     examples = load_examples(input)
     instructions = load_instructions(input2)
-    controller = MachineController(examples, mem)
+    controller = VirtualMemoryController(examples, mem)
     controller.run(instructions)
     return controller

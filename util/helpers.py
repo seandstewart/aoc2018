@@ -2,7 +2,9 @@
 # -*- coding: UTF-8 -*-
 import logging
 import pathlib
-from typing import NewType, List, Union, Dict, Hashable, Tuple, Sequence, Iterable, Set, Any, Generator, Iterator
+from collections import MutableSet, UserList
+from typing import NewType, List, Union, Dict, Hashable, Tuple, Sequence, Iterable, Set, Any, \
+    Generator, Iterator, Optional
 
 logger = logging.getLogger(__name__)
 Values = NewType('Values', List[Union[int, str]])
@@ -117,3 +119,74 @@ def manhattan_distance(a: Sequence, b: Sequence) -> int:
 def chunks(l: Sequence, n: int) -> Iterator[Sequence]:
     """Yield successive n-sized chunks from l."""
     return (l[i:i + n] for i in range(0, len(l), n))
+
+
+class SortedSet(UserList):
+
+    def __init__(self, initlist: Optional[Iterable[Hashable]] = ...) -> None:
+        super().__init__(initlist)
+
+    @property
+    def _set(self):
+        return set(self.data)
+
+    def __contains__(self, item: object) -> bool:
+        return self._set.__contains__(item)
+
+    def __getattr__(self, item: str):
+        return getattr(self._set, item)
+
+    def __add__(self, other: Iterable) -> 'SortedSet':
+        return SortedSet(super().__add__([x for x in other if x not in self]))
+
+    def __iadd__(self, other: Iterable) -> None:
+        self.extend(other)
+
+    def __and__(self, other: Iterable) -> 'SortedSet':
+        new = self._set & set(other)
+        return SortedSet(x for x in self if x in new)
+
+    def __iand__(self, other: Iterable) -> None:
+        diff = self._set - set(other)
+        for x in diff:
+            try:
+                self.remove(x)
+            except ValueError:
+                pass
+
+    def __sub__(self, other: Iterable) -> 'SortedSet':
+        new = self._set - set(other)
+        return SortedSet(x for x in self if x in new)
+
+    def __isub__(self, other: Iterable) -> None:
+        new = self._set - set(other)
+        lyst = self[:]
+        for x in lyst:
+            if x not in new:
+                self.remove(x)
+
+    def __or__(self, other: Iterable) -> 'SortedSet':
+        return self + SortedSet(other)
+
+    def __ior__(self, other: Iterable) -> None:
+        self.extend(other)
+
+    def __xor__(self, other: Iterable) -> 'SortedSet':
+        new = self._set ^ set(other)
+        return SortedSet(x for x in self if x in new) + SortedSet(x for x in other if x in new)
+
+    def __ixor__(self, other: Iterable) -> None:
+        new = self._set ^ set(other)
+        lyst = self[:]
+        for x in lyst:
+            if x not in new:
+                self.remove(x)
+        self.extend(SortedSet(x for x in other if x in new))
+
+    def extend(self, other: Iterable[Hashable]):
+        other = [x for x in other if x not in self]
+        super().extend(other)
+
+    def append(self, item: Hashable):
+        if item not in self:
+            self.append(item)
