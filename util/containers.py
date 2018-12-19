@@ -86,7 +86,7 @@ class OrderedSet(UserList):
 
     def append(self, item: Hashable) -> None:
         if item not in self:
-            self.append(item)
+            super().append(item)
 
     def add(self, item: Hashable) -> None:
         self.append(item)
