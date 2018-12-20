@@ -1,39 +1,50 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-from collections import defaultdict
-from itertools import product
-from typing import Tuple
+import dataclasses
+import pathlib
+from typing import Set, Dict, Tuple
+
+from dec12 import INPUT
 
 
-def summed_area_table(serial: int) -> defaultdict:
-    table = defaultdict(int)
-    for x, y in product(range(1, 301), range(1, 301)):
-        rack_id = x + 10
-        power = (((rack_id * y + serial) * rack_id) // 100) % 10 - 5
-        table[(x, y)] = power + table[(x, y - 1)] + table[(x - 1, y)] - table[(x - 1, y - 1)]
-    return table
+@dataclasses.dataclass
+class StateMachine:
+    state: Set[int]
+    rules: Dict[str, str]
+
+    def step(self):
+        result = set()
+        for i in range(min(self.state) - 2, max(self.state) + 3):
+            key = ''.join(
+                '#' if j in self.state else '.' for j in range(i - 2, i + 3)
+            )
+            if self.rules[key] == '#':
+                result.add(i)
+        self.state = result
+
+    def run(self, n: int = 1):
+        power = total = 0
+        for i in range(n):
+            power = total
+            self.step()
+            total = sum(self.state)
+        return power, total, i
 
 
-def region_sum(table: defaultdict, size: int, x: int, y: int) -> int:
-    x0, y0, x1, y1 = x - 1, y - 1, x + size - 1, y + size - 1
-    return table[(x0, y0)] + table[(x1, y1)] - table[(x1, y0)] - table[(x0, y1)]
+def get_state_and_rules(path: pathlib.Path = INPUT) -> Tuple[Set[int], Dict[str, str]]:
+    lines = [x for x in path.read_text().split('\n') if x]
+    state = set(i for i, x in enumerate(lines[0].split()[-1]) if x == '#')
+    rules = dict(line.split()[::2] for line in lines[1:])
+    return state, rules
 
 
-def best(table: defaultdict, size: int) -> Tuple[int, int, int]:
-    powers = []
-    for x, y in product(range(1, 301 - size + 1), range(1, 301 - size + 1)):
-        power = region_sum(table, size, x, y)
-        powers.append((power, x, y))
-
-    return max(powers)
+def get_answer1(path: pathlib.Path = INPUT) -> int:
+    state, rules = get_state_and_rules(path)
+    machine = StateMachine(state, rules)
+    power, total, i = machine.run()
+    return total
 
 
-def get_answer1(serial: int, size: int = 3) -> Tuple[int, int, int]:
-    table = summed_area_table(serial)
-    return best(table, size)
-
-
-def get_answer2(serial: int) -> Tuple[int, int, int, int]:
-    table = summed_area_table(serial)
-    powers = (best(table, s) + (s,) for s in range(1, 301))
-    return max(powers)
+def get_answer2(path: pathlib.Path = INPUT) -> int:
+    state, rules = get_state_and_rules(path)
+    machine = StateMachine(state, rules)
+    power, total, i = machine.run(1000)
+    return power + (total - power) * (50000000000 - i)
