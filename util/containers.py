@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+import enum
 from collections import UserList
-from typing import Optional, Iterable, Hashable
+from typing import Optional, Iterable, Hashable, NamedTuple, Union, Tuple
 
 
 class OrderedSet(UserList):
@@ -133,3 +134,40 @@ class OrderedSet(UserList):
             self.remove(item)
         except ValueError:
             pass
+
+
+class Direction(NamedTuple):
+    icon: str
+    x: int
+    y: int
+
+
+class CardinalDirections(enum.Enum):
+    NORTH = Direction('N', 0, 1)
+    SOUTH = Direction('S', 0, -1)
+    EAST = Direction('E', 1, 0)
+    WEST = Direction('W', -1, 0)
+
+    @classmethod
+    def get(cls, icon: str, default: Direction = None):
+        for direction in cls:
+            if direction.value.icon == icon:
+                return direction.value
+        if default:
+            return default
+        raise KeyError(f"<{icon}> is not a valid direction.")
+
+
+class Point(NamedTuple):
+    x: int
+    y: int
+
+    def __add__(self, other: Union['Point', Direction, Tuple[int, int]]):
+        if len(other) == 2:
+            x, y = other
+        else:
+            x, y = other.x, other.y
+        return Point(self.x + x, self.y + y)
+
+    def __radd__(self, other: Union['Point', Direction]):
+        return self.__add__(other)

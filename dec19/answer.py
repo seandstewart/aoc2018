@@ -52,6 +52,8 @@ class IPController:
                 # Try to short-circuit the loop. r1 is a comparison value
                 # if initial r0 == 0, the first time r1 + *previous* r5 == *current* r5, we're done
                 # else, allow that value to repeat a couple since the above *always* happens once
+                # Note: The canary index and target index change depending on the index assigned to IP
+                # I don't currently have a method to detect this automatically
                 if canary and self.memory[1] + canary == self.memory[5]:
                     if (start and counter[canary] > 2) or start == 0:
                         break

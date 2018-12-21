@@ -1,28 +1,8 @@
 from collections import defaultdict
 from functools import total_ordering
-from typing import Mapping, NamedTuple, NewType, Union, Dict, Tuple, List
+from typing import Mapping, NewType, Dict, Tuple, List
 
-
-class Direction(NamedTuple):
-    icon: str
-    x: int
-    y: int
-
-
-class Point(NamedTuple):
-    x: int
-    y: int
-
-    def __add__(self, other: Union['Point', Direction, Tuple[int, int]]):
-        if len(other) == 2:
-            x, y = other
-        else:
-            x, y = other.x, other.y
-        return Point(self.x + x, self.y + y)
-
-    def __radd__(self, other: Union['Point', Direction]):
-        return self.__add__(other)
-
+from util.containers import Direction, Point
 
 Movement = NewType('Movement', Mapping[Direction, Direction])
 
