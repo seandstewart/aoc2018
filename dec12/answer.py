@@ -20,8 +20,8 @@ class StateMachine:
                 result.add(i)
         self.state = result
 
-    def run(self, n: int = 1):
-        power = total = 0
+    def run(self, n: int = 1) -> Tuple[int, int, int]:
+        power = total = i = 0
         for i in range(n):
             power = total
             self.step()
