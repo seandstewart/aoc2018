@@ -143,8 +143,8 @@ class Direction(NamedTuple):
 
 
 class CardinalDirections(enum.Enum):
-    NORTH = Direction('N', 0, 1)
-    SOUTH = Direction('S', 0, -1)
+    NORTH = Direction('N', 0, -1)
+    SOUTH = Direction('S', 0, 1)
     EAST = Direction('E', 1, 0)
     WEST = Direction('W', -1, 0)
 
