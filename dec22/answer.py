@@ -6,30 +6,10 @@ import functools
 import itertools
 from typing import Dict, Tuple
 
-import numba
 import numpy
-from numba import intp
 
 from dec22 import INPUT
-from util.containers import Point, CardinalDirections
-
-
-# @numba.jit(nopython=True)
-@functools.lru_cache(None)
-def calc_erosion_level(index: int, depth: int, modulo: int):
-    return (index + depth) % modulo
-
-
-# @numba.jit(nopython=True)
-@functools.lru_cache(None)
-def mul(x: int, y: int):
-    return x * y
-
-
-# @numba.jit(nopython=True)
-@functools.lru_cache(None)
-def mod(x: int, y: int):
-    return x % y
+from util.containers import Point
 
 
 class TerrainType(enum.IntEnum):
@@ -40,9 +20,8 @@ class TerrainType(enum.IntEnum):
     @classmethod
     @functools.lru_cache(None)
     def get(cls, value: int):
-        modulo = mod(value, len(cls))
         for terrain in cls:
-            if modulo == terrain:
+            if value == terrain:
                 return terrain
         raise TypeError
 
@@ -51,44 +30,69 @@ class TerrainType(enum.IntEnum):
 class Terrain:
     loc: Point
     type: TerrainType
-    index: int
-    erosion: int
 
 
 class CaveSystem:
     OXMUL = 48271
     OYMUL = 16807
     MODULO = 20183
+    PADDING = 3
 
     def __init__(self, depth: int, target: Point):
         self.depth: int = depth
         self.target: Point = target
-        self.cave_map: Dict[Tuple, Terrain] = {}
+        self.cave = numpy.empty(
+            (self.target.x * self.PADDING, self.target.y * self.PADDING), dtype=int
+        )
+        self.cave_types = None
+        self.cave_map = {}
         self.populate()
 
-    def get_erosion_level(self, index: int):
-        return calc_erosion_level(index, self.depth, self.MODULO)
+    def xrange(self, start: int = 1):
+        return range(start, self.target.x * self.PADDING)
 
-    def get_geo_index(self, point: Point):
-        if point in {self.target, (0, 0)}:
-            return 0
-        if point.x == 0:
-            return mul(point.y, self.OXMUL)
-        if point.y == 0:
-            return mul(point.x, self.OYMUL)
-        neighbor1 = self.cave_map[(point.x - 1, point.y)]
-        neighbor2 = self.cave_map[(point.x, point.y - 1)]
-        return mul(neighbor2.index, neighbor1.index)
+    def yrange(self, start: int = 1):
+        return range(start, self.target.y * self.PADDING)
 
     def populate(self):
-        for x, y in itertools.product(range(self.target.x + 1), range(self.target.y + 1)):
-            point = Point(x, y)
-            index = self.get_geo_index(point)
-            erosion = self.get_erosion_level(index)
-            terrain = TerrainType.get(erosion)
-            terrain = Terrain(point, terrain, index, erosion)
-            self.cave_map[tuple(point)] = terrain
+        # set defaults
+        xx, yy = numpy.meshgrid(
+            numpy.arange(self.target.x * self.PADDING),
+            numpy.arange(self.target.y * self.PADDING),
+            indexing='ij'
+        )
+        self.cave[xx == 0] = (yy[xx == 0] * self.OXMUL) % self.MODULO
+        self.cave[yy == 0] = (xx[yy == 0] * self.OYMUL) % self.MODULO
+        for x, y in itertools.product(self.xrange(), self.yrange()):
+            self.cave[x, y] = (
+                ((self.cave[x - 1, y] % self.MODULO) * (self.cave[x, y - 1] % self.MODULO)) + self.depth
+            ) % self.MODULO
+        # Target and top-left are equal
+        self.cave[tuple(self.target + (1, 1))] = self.depth
+        self.cave_types = self.cave % len(TerrainType)
+        for x, y in itertools.product(self.xrange(), self.yrange()):
+            terrain_type = TerrainType.get(self.cave_types[x, y])
+            loc = Point(x - 1, y - 1)
+            self.cave_map[loc] = Terrain(loc, terrain_type)
+
+    def draw(self):
+        rows = []
+        for y in range(self.target.y + 6):
+            row = []
+            for x in range(self.target.x + 6):
+                loc = Point(x, y)
+                terrain = self.cave_map[loc]
+                types = ['.', '=', '|']
+                if loc == (0, 0):
+                    ico = 'M'
+                elif loc == self.target:
+                    ico = 'T'
+                else:
+                    ico = types[terrain.type.value]
+                row.append(ico)
+            rows.append(''.join(row))
+        return '\n'.join(rows)
 
     def get_target_risk_level(self):
-        return sum(x.type for x in self.cave_map.values())
+        return self.cave_types[:self.target.x + 1, :self.target.y + 1].sum()
 
