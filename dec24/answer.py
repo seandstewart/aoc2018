@@ -9,7 +9,6 @@ import operator
 import pathlib
 import re
 import typing
-import uuid
 from functools import lru_cache, total_ordering
 
 from dec24 import INPUT
@@ -126,35 +125,30 @@ class UnitGroup:
     def select_target(self, enemies: typing.Sequence['UnitGroup']) -> Target:
         selection: Target = None
         for group in enemies:
-            damage_est = self.power
-            if self.attack.type in group.weak:
-                damage_est *= ELEMENTAL_MULTIPLIER
-            # Only select if we can deal some damage
-            elif self.attack.type in group.immune:
-                continue
-
-            if selection:
-                # The best one yet!
-                if damage_est > selection.damage_est:
-                    selection = Target(group, damage_est)
-                    continue
-                # Break the tie...
-                if damage_est == selection.damage_est:
-                    # Secondary tie break
-                    if selection.group.power > group.power:
-                        continue
-                    if group.power == selection.group.power:
-                        group1 = selection.group
-                        # Keep the current selection on another tie
-                        selection = selection if group1.attack.initiative >= group.attack.initiative \
-                            else Target(group, damage_est)
-                        continue
-                    # We have a winner... so far
-                    if group.power > selection.group.power:
+            damage_est = group.estimate_damage(self)
+            if damage_est:
+                if selection:
+                    # The best one yet!
+                    if damage_est > selection.damage_est:
                         selection = Target(group, damage_est)
                         continue
-            # If there isn't a selection yet, default to this one.
-            selection = Target(group, damage_est)
+                    # Break the tie...
+                    if damage_est == selection.damage_est:
+                        # Secondary tie break
+                        if selection.group.power > group.power:
+                            continue
+                        if group.power == selection.group.power:
+                            group1 = selection.group
+                            # Keep the current selection on another tie
+                            selection = selection if group1.attack.initiative >= group.attack.initiative \
+                                else Target(group, damage_est)
+                            continue
+                        # We have a winner... so far
+                        if group.power > selection.group.power:
+                            selection = Target(group, damage_est)
+                            continue
+                # If there isn't a selection yet, default to this one.
+                selection = Target(group, damage_est)
 
         return selection
 
