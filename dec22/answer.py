@@ -4,9 +4,10 @@ import dataclasses
 import enum
 import functools
 import itertools
+from copy import copy
 from typing import Dict, Tuple
 
-import numpy
+import numpy as np
 
 from dec22 import INPUT
 from util.containers import Point
@@ -41,39 +42,37 @@ class CaveSystem:
     def __init__(self, depth: int, target: Point):
         self.depth: int = depth
         self.target: Point = target
-        self.cave = numpy.empty(
-            (self.target.x * self.PADDING, self.target.y * self.PADDING), dtype=int
-        )
+        self.xmax = self.target.x * self.PADDING
+        self.ymax = self.target.y * self.PADDING
+        self.cave = np.empty((self.xmax, self.ymax), dtype=int)
         self.cave_types = None
         self.cave_map = {}
         self.populate()
 
     def xrange(self, start: int = 1):
-        return range(start, self.target.x * self.PADDING)
+        return range(start, self.xmax)
 
     def yrange(self, start: int = 1):
-        return range(start, self.target.y * self.PADDING)
+        return range(start, self.ymax)
 
     def populate(self):
-        # set defaults
-        xx, yy = numpy.meshgrid(
-            numpy.arange(self.target.x * self.PADDING),
-            numpy.arange(self.target.y * self.PADDING),
-            indexing='ij'
-        )
-        self.cave[xx == 0] = (yy[xx == 0] * self.OXMUL) % self.MODULO
-        self.cave[yy == 0] = (xx[yy == 0] * self.OYMUL) % self.MODULO
+        # Set the 0-indexes
+        xx, yy = np.meshgrid(np.arange(self.xmax), np.arange(self.ymax), indexing="ij")
+        self.cave[xx == 0] = (yy[xx == 0] * self.OXMUL + self.depth) % self.MODULO
+        self.cave[yy == 0] = (xx[yy == 0] * self.OYMUL + self.depth) % self.MODULO
+        # Calculate erosion levels
         for x, y in itertools.product(self.xrange(), self.yrange()):
             self.cave[x, y] = (
-                ((self.cave[x - 1, y] % self.MODULO) * (self.cave[x, y - 1] % self.MODULO)) + self.depth
+                (self.cave[x - 1, y] % self.MODULO) * (self.cave[x, y - 1] % self.MODULO) + self.depth
             ) % self.MODULO
-        # Target and top-left are equal
-        self.cave[tuple(self.target + (1, 1))] = self.depth
+        # Target is equal to start
+        self.cave[tuple(self.target)] = self.depth
         self.cave_types = self.cave % len(TerrainType)
-        for x, y in itertools.product(self.xrange(), self.yrange()):
+        # Populate the mapping for easy debugging
+        for x, y in itertools.product(self.xrange(start=0), self.yrange(start=0)):
             terrain_type = TerrainType.get(self.cave_types[x, y])
-            loc = Point(x - 1, y - 1)
-            self.cave_map[loc] = Terrain(loc, terrain_type)
+            loc = Point(x, y)
+            self.cave_map[x, y] = Terrain(loc, terrain_type)
 
     def draw(self):
         rows = []
