@@ -5,7 +5,7 @@ import enum
 import functools
 import itertools
 from copy import copy
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 import numpy as np
 
@@ -25,6 +25,22 @@ class TerrainType(enum.IntEnum):
             if value == terrain:
                 return terrain
         raise TypeError
+
+
+class SpelunkingTools(enum.IntEnum):
+    CLIMBING_GEAR = 0
+    TORCH = 1
+    NEITHER = 3
+
+    @classmethod
+    @functools.lru_cache(None)
+    def get_options(cls, value: Union[TerrainType, int]):
+        if value == TerrainType.ROCKY:
+            return {cls.CLIMBING_GEAR, cls.TORCH}
+        elif value == TerrainType.WET:
+            return {cls.CLIMBING_GEAR, cls.NEITHER}
+        elif value == TerrainType.NARROW:
+            return {cls.TORCH, cls.NEITHER}
 
 
 @dataclasses.dataclass
@@ -74,7 +90,7 @@ class CaveSystem:
             loc = Point(x, y)
             self.cave_map[x, y] = Terrain(loc, terrain_type)
 
-    def draw(self):
+    def draw(self) -> str:
         rows = []
         for y in range(self.target.y + 6):
             row = []
@@ -92,6 +108,6 @@ class CaveSystem:
             rows.append(''.join(row))
         return '\n'.join(rows)
 
-    def get_target_risk_level(self):
+    def get_target_risk_level(self) -> int:
         return self.cave_types[:self.target.x + 1, :self.target.y + 1].sum()
 
