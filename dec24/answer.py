@@ -166,15 +166,15 @@ class UnitGroup:
 
 
 class BattlePair(typing.NamedTuple):
-    group: UnitGroup
+    attacker: UnitGroup
     target: Target
 
     @property
     def initiative(self):
-        return self.group.attack.initiative
+        return self.attacker.attack.initiative
 
     def fight(self):
-        self.target.group.take_damage(self.group)
+        self.target.group.take_damage(self.attacker)
 
 
 @dataclasses.dataclass
@@ -198,7 +198,6 @@ class ImmunityWar:
 
     def battle(self):
         pairs: typing.List[BattlePair] = []
-        dead: typing.List[UnitGroup] = []
         seen_dead: typing.Set[str] = set()
         self.immunes.sort(reverse=True)
         self.infects.sort(reverse=True)
@@ -206,29 +205,24 @@ class ImmunityWar:
         pairs.extend(self.select_targets(self.immunes, collections.deque(self.infects)))
         pairs.sort(key=initgetter, reverse=True)
         for pair in pairs:
-            print(f"{pair.group.id} attacking {pair.target.group.id} "
-                  f"(HP: {pair.target.group.hp}) with {pair.target.damage_est} damage.")
-            if pair.group.is_alive and pair.target.is_alive:
+            if pair.attacker.is_alive and pair.target.is_alive:
+                print(f"{pair.attacker.id} attacking {pair.target.group.id} "
+                      f"(HP: {pair.target.group.hp}) with {pair.target.damage_est} damage.")
                 pair.fight()
                 print(f"Result: {pair.target.group.id}, Units: {pair.target.group.units}")
-            if not pair.group.is_alive and pair.group.id not in seen_dead:
-                dead.append(pair.group)
-                seen_dead.add(pair.group.id)
-            if not pair.target.is_alive and pair.target.group.id not in seen_dead:
-                dead.append(pair.target.group)
+            if not pair.attacker.is_alive:
+                seen_dead.add(pair.attacker.id)
+            if not pair.target.is_alive:
                 seen_dead.add(pair.target.group.id)
         self.immunes = [x for x in self.immunes if x.id not in seen_dead]
         self.infects = [x for x in self.infects if x.id not in seen_dead]
-        return seen_dead
 
     def run_war(self):
         counter = 0
-        while True:
+        while self.infects and self.immunes:
             counter += 1
-            print(f"Battle {counter}\n")
+            print(f"\n# Battle {counter}\n")
             self.battle()
-            if not self.immunes or not self.infects:
-                break
         return self.immunes or self.infects
 
 
@@ -239,6 +233,10 @@ def load_groups(path: pathlib.Path = INPUT) -> \
     immunes, infects = immunes.split('\n'), infects.split('\n')
     immunes.pop(0)
     infects.pop(0)
-    immunes = sorted((UnitGroup.from_str(x, ix + 1) for ix, x in enumerate(immunes) if x), reverse=True)
-    infects = sorted((UnitGroup.from_str(x, ix + 1, Team.INF) for ix, x in enumerate(infects) if x), reverse=True)
+    immunes = sorted(
+        (UnitGroup.from_str(x, ix + 1) for ix, x in enumerate(immunes) if x), reverse=True
+    )
+    infects = sorted(
+        (UnitGroup.from_str(x, ix + 1, Team.INF) for ix, x in enumerate(infects) if x), reverse=True
+    )
     return immunes, infects
