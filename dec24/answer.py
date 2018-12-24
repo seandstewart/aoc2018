@@ -67,7 +67,7 @@ class UnitGroup:
     PATTERN: typing.ClassVar[typing.Pattern] = re.compile(
         r"(?P<units>\d+) units each with (?P<hp>\d+) hit points "
         r"((\((?P<buffer1>weak|immune) to (?P<type1>\w+(, )?)+(; )?)?"
-        r"((?P<buffer2>weak|immune) to (?P<type2>(\w+(, )?)+))?\))? "
+        r"((?P<buffer2>weak|immune) to (?P<type2>(\w+(, )?)+))?\))? ?"
         r"with an attack that does (?P<attack_power>\d+) (?P<attack_type>\w+) damage "
         r"at initiative (?P<initiative>\d+)"
     )
@@ -105,7 +105,15 @@ class UnitGroup:
 
     @property
     def is_alive(self) -> bool:
-        return bool(self.units)
+        return self.units > 0
+
+    def estimate_damage(self, other: 'UnitGroup') -> int:
+        est = other.power
+        if other.attack.type in self.weak:
+            est *= ELEMENTAL_MULTIPLIER
+        elif other.attack.type in self.immune:
+            est = 0
+        return est
 
     def __eq__(self, other: 'UnitGroup') -> bool:
         return (other.power, other.attack.initiative) == (self.power, self.attack.initiative)
@@ -133,6 +141,8 @@ class UnitGroup:
                 # Break the tie...
                 if damage_est == selection.damage_est:
                     # Secondary tie break
+                    if selection.group.power > group.power:
+                        continue
                     if group.power == selection.group.power:
                         group1 = selection.group
                         # Keep the current selection on another tie
@@ -148,7 +158,9 @@ class UnitGroup:
 
         return selection
 
-    def take_damage(self, damage: int):
+    def take_damage(self, other: 'UnitGroup'):
+        damage = self.estimate_damage(other)
+        print(f"Dealing {damage} damage.")
         self.units -= damage // self.hp
         print(f"Remaining units: {self.units}")
 
@@ -162,7 +174,7 @@ class BattlePair(typing.NamedTuple):
         return self.group.attack.initiative
 
     def fight(self):
-        self.target.group.take_damage(self.target.damage_est)
+        self.target.group.take_damage(self.group)
 
 
 @dataclasses.dataclass
@@ -181,6 +193,7 @@ class ImmunityWar:
             if target:
                 candidates.remove(target.group)
                 pairs.append(BattlePair(group, target))
+        pairs.sort(key=initgetter, reverse=True)
         return pairs
 
     def battle(self):
@@ -189,21 +202,34 @@ class ImmunityWar:
         seen_dead: typing.Set[str] = set()
         self.immunes.sort(reverse=True)
         self.infects.sort(reverse=True)
-        pairs.extend(self.select_targets(self.immunes, collections.deque(self.infects)))
         pairs.extend(self.select_targets(self.infects, collections.deque(self.immunes)))
+        pairs.extend(self.select_targets(self.immunes, collections.deque(self.infects)))
         pairs.sort(key=initgetter, reverse=True)
         for pair in pairs:
-            print(f"{pair.group} attacking {pair.target.group} with {pair.target.damage_est}")
+            print(f"{pair.group.id} attacking {pair.target.group.id} "
+                  f"(HP: {pair.target.group.hp}) with {pair.target.damage_est} damage.")
             if pair.group.is_alive and pair.target.is_alive:
                 pair.fight()
-                print(f"Result: {pair.target.group}")
+                print(f"Result: {pair.target.group.id}, Units: {pair.target.group.units}")
             if not pair.group.is_alive and pair.group.id not in seen_dead:
                 dead.append(pair.group)
                 seen_dead.add(pair.group.id)
             if not pair.target.is_alive and pair.target.group.id not in seen_dead:
                 dead.append(pair.target.group)
                 seen_dead.add(pair.target.group.id)
-        return dead
+        self.immunes = [x for x in self.immunes if x.id not in seen_dead]
+        self.infects = [x for x in self.infects if x.id not in seen_dead]
+        return seen_dead
+
+    def run_war(self):
+        counter = 0
+        while True:
+            counter += 1
+            print(f"Battle {counter}\n")
+            self.battle()
+            if not self.immunes or not self.infects:
+                break
+        return self.immunes or self.infects
 
 
 def load_groups(path: pathlib.Path = INPUT) -> \
